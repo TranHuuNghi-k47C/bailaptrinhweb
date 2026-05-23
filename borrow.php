@@ -26,7 +26,7 @@ $msg = '';
 // Xử lý Form Mượn sách
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($require_login) {
-        $msg = "<div class='alert alert-warning py-2'><i class='bi bi-exclamation-circle'></i> Vui lòng đăng nhập với tài khoản Sinh viên để mượn sách. <a href='{$login_link}' class='alert-link'>Đăng nhập</a></div>";
+        $msg = "<div class='alert alert-warning py-2'><i class='bi bi-exclamation-circle'></i> Vui lòng đăng nhập với tài khoản Sinh viên để mượn sách. <a href='{$login_link}' class='alert-link'>Đăng nhập ngay</a></div>";
     } else {
         $qty = (int)$_POST['quantity'];
         $b_date = $_POST['borrow_date'];
@@ -49,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $request_id = $pdo->lastInsertId();
 
             writeBorrowLog(
-            "USER_ID {$_SESSION['user_id']} - USERNAME {$_SESSION['username']} yêu cầu mượn BOOK_ID {$book_id}, REQUEST_ID {$request_id}, số lượng {$qty}, từ {$b_date} đến {$r_date}, phí dự kiến {$fee}đ"
+            "USER_ID {$_SESSION['user_id']} - USERNAME {$_SESSION['username']} yêu cầu mượn BOOK_ID {$book_id}, REQUEST_ID {$request_id}, số lượng {$qty}, từ {$b_date} đến {$r_date}."
             );
             $msg = "<div class='alert alert-success py-2'><i class='bi bi-check-circle-fill'></i> Đã gửi yêu cầu thành công! Vui lòng chờ duyệt.</div>";
         }
