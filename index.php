@@ -164,42 +164,28 @@ body{font-family:'Roboto',sans-serif;background:var(--qnu-bg);color:#444;overflo
 .book-img-box{aspect-ratio:2/3;overflow:hidden;background:linear-gradient(180deg,#fbfdff,#f0f6ff);display:flex;align-items:center;justify-content:center;padding:8px;border-radius:12px;}
 .book-img-box img{width:100%;height:100%;object-fit:cover;transition:transform .35s;border-radius:10px;}
 .book-card:hover .book-img-box img{transform:scale(1.02);}
+.book-card-body{padding:12px;flex:1;display:flex;flex-direction:column;}
+.book-title{font-weight:700;font-size:13px;line-height:1.3;color:#0054a6;margin-bottom:4px;min-height:26px;}
 .author-line{font-size:12px;height:20px;line-height:20px;overflow:hidden;}
 .author-text{display:inline-block;max-width:100%;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.book-actions{display:flex;gap:6px;margin-top:auto;padding-top:8px;border-top:1px solid #f0f0f0;}
 .info-content-fade{animation:fadeIn .5s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .pagination .page-link{color:var(--qnu-blue);border-radius:8px;margin:0 3px;font-weight:500;}
 .pagination .page-item.active .page-link{background-color:var(--qnu-blue);border-color:var(--qnu-blue);color:white;}
 footer{background:#0f172a;color:#fff;padding:40px 0 0;border-top:4px solid var(--qnu-gold);}
-/* Sao đánh giá */
 .star-mini{font-size:11px;line-height:1;}
 .star-mini .on{color:var(--qnu-gold);}
 .star-mini .off{color:#ddd;}
-.btn-rate{font-size:11px;padding:2px 10px;border-radius:20px;border:1px solid var(--qnu-gold);color:#7a5800;background:#fff9e6;cursor:pointer;transition:background .2s;display:inline-block;margin-top:4px;}
+.btn-rate{font-size:11px;padding:2px 10px;border-radius:20px;border:1px solid var(--qnu-gold);color:#7a5800;background:#fff9e6;cursor:pointer;transition:background .2s;display:inline-block;}
 .btn-rate:hover{background:var(--qnu-gold);color:#000;}
-/* Modal đánh giá */
-.review-modal-header{background:linear-gradient(135deg,var(--qnu-blue-dark),#1a7ce8);color:white;border:none;padding:16px 20px;}
-.avg-box{background:linear-gradient(135deg,var(--qnu-blue),#1a7ce8);color:white;border-radius:14px;padding:16px 22px;text-align:center;min-width:100px;}
-.avg-box .score{font-size:2.4rem;font-weight:900;line-height:1;}
-.avg-box .out{font-size:11px;opacity:.75;margin-top:2px;}
-.star-input{display:flex;gap:4px;}
-.star-input .si{font-size:28px;color:#ddd;cursor:pointer;transition:color .12s,transform .12s;line-height:1;user-select:none;}
-.star-input .si.on{color:var(--qnu-gold);}
-.star-input .si:hover{transform:scale(1.2);}
-.review-list{max-height:360px;overflow-y:auto;padding-right:4px;}
-.review-item{border-bottom:1px solid #f0f0f0;padding:11px 0;}
-.review-item:last-child{border-bottom:none;}
-.bar-row{display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:3px;}
-.bar-track{flex:1;background:#f0f0f0;border-radius:9px;height:6px;overflow:hidden;}
-.bar-fill{height:100%;background:var(--qnu-gold);border-radius:9px;}
-/* Nút giỏ mượn */
-.cart-btn-wrapper{position:relative;display:inline-block;}
-.cart-badge{position:absolute;top:-6px;right:-8px;background:#e74c3c;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;}
-/* Nút thêm giỏ trên card */
-.btn-add-cart{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--qnu-blue);color:var(--qnu-blue);background:#f0f6ff;cursor:pointer;transition:background .2s;display:inline-block;margin-top:4px;width:100%;}
+.btn-add-cart{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--qnu-blue);color:var(--qnu-blue);background:#f0f6ff;cursor:pointer;transition:background .2s;display:inline-block;flex:1;}
 .btn-add-cart:hover{background:var(--qnu-blue);color:white;}
-/* Toast thông báo */
+.cart-btn-wrapper{position:relative;display:inline-block;}
+.cart-badge{position:absolute;top:-6px;right:-8px;background:#e74c3c;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;}
+.empty-state{text-align:center;padding:60px 20px;}
+.empty-state-icon{font-size:72px;margin-bottom:15px;}
 </style>
 </head>
 <body>
@@ -367,14 +353,11 @@ footer{background:#0f172a;color:#fff;padding:40px 0 0;border-top:4px solid var(-
   </div>
 </div>
 
-<!-- MODAL ĐÁNH GIÁ (giữ nguyên phần cũ) -->
-<div class="modal fade" id="reviewModal" tabindex="-1">
-  <!-- ... (giữ nguyên nội dung modal đánh giá như bản cũ của bạn) ... -->
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Dữ liệu sách
+// ═══════════════════════════════════════════════════════════════
+// DỮLIỆU SÁCH TỪ DATABASE
+// ═══════════════════════════════════════════════════════════════
 const rawData = <?php echo $books_json; ?>;
 const IS_STUDENT = <?php echo $is_student; ?>;
 
@@ -391,19 +374,257 @@ const QNU_DATABASE = rawData.map(b => ({
     review_count: parseInt(b.review_count || 0),
 }));
 
-// Phần JavaScript còn lại (giữ nguyên từ file cũ của bạn)
+// ═══════════════════════════════════════════════════════════════
+// CẤU HÌNH PHÂN TRANG
+// ═══════════════════════════════════════════════════════════════
 const itemsPerPage = 16;
-let currentPage = 1, currentFilteredData = [];
+let currentPage = 1;
+let currentFilteredData = [];
+let currentFilter = 'all';
 
-// ... (Bạn có thể copy phần JavaScript từ file cũ của bạn vào đây, từ function initWorkspace trở xuống)
+// ═══════════════════════════════════════════════════════════════
+// HÀM FILTER SÁCH
+// ═══════════════════════════════════════════════════════════════
+function filterBooks(type) {
+    if (type === 'all') {
+        return QNU_DATABASE;
+    } else if (type === 'physical') {
+        return QNU_DATABASE.filter(b => b.quantity > 0);
+    } else if (type === 'ebook') {
+        return QNU_DATABASE.filter(b => b.ebook_available > 0);
+    }
+    return QNU_DATABASE;
+}
 
-window.onload = () => {
+// ═══════════════════════════════════════════════════════════════
+// HÀM RENDER SÁCH
+// ═══════════════════════════════════════════════════════════════
+function renderBooks(books, page = 1) {
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginatedBooks = books.slice(start, end);
+
+    let html = '<div class="row g-3">';
+    
+    if (paginatedBooks.length === 0) {
+        html = '<div class="empty-state"><div class="empty-state-icon">📚</div><p class="text-muted">Không tìm thấy sách</p></div>';
+    } else {
+        paginatedBooks.forEach(book => {
+            const stars = renderStars(book.avg_rating);
+            const cartBtn = IS_STUDENT === 'true' 
+                ? `<button class="btn-add-cart" onclick="addToCart(${book.id}, 1)"><i class="bi bi-cart-plus"></i> Mượn</button>`
+                : '';
+            
+            html += `
+                <div class="col-md-6 col-lg-3">
+                    <div class="book-card shadow-sm">
+                        <div class="book-img-box">
+                            <img src="${book.img}" alt="${book.title}" onerror="this.src='img/default.png'">
+                        </div>
+                        <div class="book-card-body">
+                            <div class="book-title">${book.title}</div>
+                            <div class="author-line">
+                                <span class="author-text text-muted small">${book.author}</span>
+                            </div>
+                            <div class="star-mini mt-2">
+                                <span class="on">${stars}</span>
+                                <span class="off">${'☆'.repeat(5 - Math.round(book.avg_rating))}</span>
+                                <span class="small ms-1">(${book.review_count})</span>
+                            </div>
+                            <div class="book-actions">
+                                <a href="detail.php?id=${book.id}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="bi bi-eye"></i> Xem
+                                </a>
+                                ${cartBtn}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    html += '</div>';
+    
+    // PHÂN TRANG
+    const totalPages = Math.ceil(books.length / itemsPerPage);
+    if (totalPages > 1) {
+        html += '<nav class="mt-4"><ul class="pagination justify-content-center">';
+        
+        for (let i = 1; i <= totalPages; i++) {
+            const activeClass = i === page ? 'active' : '';
+            html += `<li class="page-item ${activeClass}"><a class="page-link" onclick="goToPage(${i})">${i}</a></li>`;
+        }
+        
+        html += '</ul></nav>';
+    }
+    
+    document.getElementById('dynamic-workspace').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM HIỂN THỊ SAO
+// ═══════════════════════════════════════════════════════════════
+function renderStars(rating) {
+    const rounded = Math.round(rating);
+    return '★'.repeat(rounded);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM LOAD CONTENT (CHÍNH)
+// ═══════════════════════════════════════════════════════════════
+function loadContent(type, element) {
+    currentFilter = type;
+    currentPage = 1;
+    currentFilteredData = filterBooks(type);
+    
+    // CẬP NHẬT NÚT ACTIVE
+    document.querySelectorAll('#main-nav-group .list-group-item').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    element.classList.add('active');
+    
+    renderBooks(currentFilteredData, 1);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM CHUYỂN TRANG
+// ═══════════════════════════════════════════════════════════════
+function goToPage(page) {
+    currentPage = page;
+    renderBooks(currentFilteredData, page);
+    document.querySelector('.container.py-5').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM TÌM KIẾM TOÀN CỤC
+// ═══════════════════════════════════════════════════════════════
+function executeGlobalSearch() {
+    const query = document.getElementById('master-search-input').value.toLowerCase().trim();
+    
+    if (query === '') {
+        loadContent('all', document.querySelector('#main-nav-group .list-group-item'));
+        return;
+    }
+    
+    const results = QNU_DATABASE.filter(book => 
+        book.title.toLowerCase().includes(query) ||
+        book.author.toLowerCase().includes(query) ||
+        book.category.toLowerCase().includes(query)
+    );
+    
+    currentFilteredData = results;
+    currentPage = 1;
+    
+    document.querySelectorAll('#main-nav-group .list-group-item').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    renderBooks(results, 1);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM THÊM VÀO GIỎ
+// ═══════════════════════════════════════════════════════════════
+function addToCart(bookId, qty) {
+    if (IS_STUDENT !== 'true') {
+        new bootstrap.Modal(document.getElementById('loginModal')).show();
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('ajax_cart', '1');
+    formData.append('book_id', bookId);
+    formData.append('quantity', qty);
+
+    fetch('index.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            showToast(data.msg);
+            updateCartBadge(data.count);
+        } else if (data.need_login) {
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
+        } else {
+            alert(data.msg || 'Có lỗi xảy ra');
+        }
+    })
+    .catch(e => console.error(e));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM CẬP NHẬT BADGE GIỎ
+// ═══════════════════════════════════════════════════════════════
+function updateCartBadge(count) {
+    const badge = document.getElementById('cart-badge');
+    const sidebarCount = document.getElementById('sidebar-cart-count');
+    
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+    
+    if (sidebarCount) {
+        sidebarCount.textContent = count;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM HIỂN THỊ TOAST
+// ═══════════════════════════════════════════════════════════════
+function showToast(msg) {
+    const toastEl = document.getElementById('cartToast');
+    const msgEl = document.getElementById('cartToastMsg');
+    msgEl.textContent = msg;
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM HIỂN THỊ THÔNG TIN TĨŃ (NỘI QUY, V.V)
+// ═══════════════════════════════════════════════════════════════
+function showStaticInfo(type, element) {
+    let content = '';
+    
+    if (type === 'rules') {
+        content = `
+            <div class="alert alert-info">
+                <h5 class="fw-bold text-primary mb-3">📜 NỘI QUY SỬ DỤNG THƯ VIỆN</h5>
+                <ul class="small">
+                    <li>Mỗi lần mượn tối đa 5 cuốn</li>
+                    <li>Thời gian mượn mặc định: 30 ngày</li>
+                    <li>Có thể gia hạn tối đa 2 lần (15 ngày/lần)</li>
+                    <li>Nếu quá hạn: 10.000 VND/ngày/cuốn</li>
+                    <li>Sách bị mất: phải bồi thường bằng tiền</li>
+                    <li>Có thể thanh toán qua QR code</li>
+                </ul>
+            </div>
+        `;
+    }
+    
+    document.getElementById('dynamic-workspace').innerHTML = content;
+    
+    document.querySelectorAll('#main-nav-group .list-group-item').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    element.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KHỞI TẠNG KHI LOAD TRANG
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
     loadContent('all', document.querySelector('.list-group-item'));
     <?php if($login_error): ?>
     var myModal = new bootstrap.Modal(document.getElementById('loginModal'));
     myModal.show();
     <?php endif; ?>
-};
+});
 </script>
 </body>
 </html>
