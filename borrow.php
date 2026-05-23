@@ -2,6 +2,7 @@
 session_start();
 require_once 'config.php';
 require_once 'logger.php';
+
 // Kiểm tra quyền Sinh viên: nếu chưa đăng nhập thì chỉ hiện thông báo yêu cầu đăng nhập
 $require_login = false;
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'student') {
@@ -28,30 +29,74 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($require_login) {
         $msg = "<div class='alert alert-warning py-2'><i class='bi bi-exclamation-circle'></i> Vui lòng đăng nhập với tài khoản Sinh viên để mượn sách. <a href='{$login_link}' class='alert-link'>Đăng nhập ngay</a></div>";
     } else {
-        $qty = (int)$_POST['quantity'];
-        $b_date = $_POST['borrow_date'];
-        $r_date = $_POST['return_date'];
-        
-        // Tính số ngày và phí
-        $days = (strtotime($r_date) - strtotime($b_date)) / 86400;
-        
-        if ($days <= 0) {
-            $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Ngày trả phải sau ngày mượn!</div>";
-        } elseif ($qty > $book['quantity']) {
-            $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Không đủ số lượng sách trong kho!</div>";
+        // Kiểm tra user_id có tồn tại
+        if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+            $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Lỗi: Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.</div>";
         } else {
-            $fee = $days * 2000 * $qty;
+            // Validate và sanitize input
+            $qty = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 0;
+            $b_date = isset($_POST['borrow_date']) ? trim($_POST['borrow_date']) : '';
+            $r_date = isset($_POST['return_date']) ? trim($_POST['return_date']) : '';
             
-            // Lưu vào DB
-            $stmt = $pdo->prepare("INSERT INTO BorrowRequests (user_id, book_id, quantity, borrow_date, return_date, total_fee) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$_SESSION['user_id'], $book_id, $qty, $b_date, $r_date, $fee]);
-
-            $request_id = $pdo->lastInsertId();
-
-            writeBorrowLog(
-            "USER_ID {$_SESSION['user_id']} - USERNAME {$_SESSION['username']} yêu cầu mượn BOOK_ID {$book_id}, REQUEST_ID {$request_id}, số lượng {$qty}, từ {$b_date} đến {$r_date}."
-            );
-            $msg = "<div class='alert alert-success py-2'><i class='bi bi-check-circle-fill'></i> Đã gửi yêu cầu thành công! Vui lòng chờ duyệt.</div>";
+            // Kiểm tra input không được rỗng
+            if (empty($qty) || empty($b_date) || empty($r_date)) {
+                $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Vui lòng điền đầy đủ thông tin!</div>";
+            } else {
+                // Tính số ngày và phí
+                $days = (strtotime($r_date) - strtotime($b_date)) / 86400;
+                
+                if ($days <= 0) {
+                    $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Ngày trả phải sau ngày mượn!</div>";
+                } elseif ($qty <= 0) {
+                    $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Số lượng phải lớn hơn 0!</div>";
+                } elseif ($qty > $book['quantity']) {
+                    $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Không đủ số lượng sách trong kho!</div>";
+                } else {
+                    // Tính phí (2000 VNĐ/ngày/cuốn)
+                    $fee = round($days * 2000 * $qty);
+                    
+                    try {
+                        // Bắt đầu transaction
+                        $pdo->beginTransaction();
+                        
+                        // Lưu vào DB
+                        $stmt = $pdo->prepare(
+                            "INSERT INTO BorrowRequests 
+                            (user_id, book_id, quantity, borrow_date, return_date, total_fee) 
+                            VALUES (?, ?, ?, ?, ?, ?)"
+                        );
+                        
+                        $result = $stmt->execute([
+                            $_SESSION['user_id'], 
+                            $book_id, 
+                            $qty, 
+                            $b_date, 
+                            $r_date, 
+                            $fee
+                        ]);
+                        
+                        if ($result) {
+                            $request_id = $pdo->lastInsertId();
+                            
+                            // Ghi log
+                            writeBorrowLog(
+                                "USER_ID {$_SESSION['user_id']} - USERNAME {$_SESSION['username']} yêu cầu mượn BOOK_ID {$book_id}, REQUEST_ID {$request_id}, số lượng {$qty}, từ {$b_date} đến {$r_date}, phí: {$fee} VNĐ."
+                            );
+                            
+                            // Commit transaction
+                            $pdo->commit();
+                            
+                            $msg = "<div class='alert alert-success py-2'><i class='bi bi-check-circle-fill'></i> Đã gửi yêu cầu thành công! Vui lòng chờ duyệt.</div>";
+                        } else {
+                            $pdo->rollBack();
+                            $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Lỗi khi lưu dữ liệu. Vui lòng thử lại.</div>";
+                        }
+                    } catch (PDOException $e) {
+                        $pdo->rollBack();
+                        $msg = "<div class='alert alert-danger py-2'><i class='bi bi-exclamation-triangle-fill'></i> Lỗi cơ sở dữ liệu: " . htmlspecialchars($e->getMessage()) . "</div>";
+                    }
+                }
+            }
         }
     }
 }
@@ -114,7 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="d-flex align-items-center">
                 <a href="index.php" class="btn btn-outline-primary btn-sm rounded-pill me-3"><i class="bi bi-house-door"></i> Về trang chủ</a>
                 <?php if (isset($_SESSION['username'])): ?>
-                    <span class="me-3 fw-bold text-primary small"><i class="bi bi-person-circle"></i> <?php echo $_SESSION['username']; ?></span>
+                    <span class="me-3 fw-bold text-primary small"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['username']); ?></span>
                 <?php else: ?>
                     <a href="login.php" class="btn btn-outline-success btn-sm rounded-pill ms-3"><i class="bi bi-box-arrow-in-right"></i> Đăng nhập</a>
                 <?php endif; ?>
